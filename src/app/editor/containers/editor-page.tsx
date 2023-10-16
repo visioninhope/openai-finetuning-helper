@@ -1,11 +1,12 @@
 'use client';
 
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 
 import { copyToClipboard } from '@/utils/clipboard';
 import { Example } from '@/types/example';
 import { Message } from '@/types/message';
 import { defaultRole } from '@/types/role';
+import { getApiKey } from '@/utils/openai'; // Get the API key using getApiKey function
 
 import { examplesReducer } from '../reducers/examples';
 import EditorPage from '../components/editor-page';
@@ -14,7 +15,6 @@ const examplesFromJsonl = (jsonl?: string) => {
   const defaultExamples: Example[] = [
     { messages: [{ role: defaultRole, content: '' }] },
   ];
-
   if (!jsonl) {
     return defaultExamples;
   }
@@ -32,13 +32,11 @@ const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
 };
 
 interface EditorPageContainerProps {
-  apiKey?: string;
   fileName?: string;
   dataset?: string;
 }
 
 const EditorPageContainer = ({
-  apiKey,
   fileName: initialFileName,
   dataset,
 }: EditorPageContainerProps) => {
@@ -50,8 +48,12 @@ const EditorPageContainer = ({
   const [showFirstMessage, setShowFirstMessage] = useState(true);
   const [defaultFirstRole, setDefaultFirstRole] = useState(defaultRole);
   const [defaultFirstMessage, setDefaultFirstMessage] = useState('');
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const isUploadDisabled = !apiKey || !fileName.trim();
 
-  const isUploadDisabled = !apiKey?.trim() || !fileName.trim();
+  useEffect(() => {
+    setApiKey(getApiKey()?.trim() ?? null);
+  }, []);
 
   const examplesToJsonl = () => {
     return examples
